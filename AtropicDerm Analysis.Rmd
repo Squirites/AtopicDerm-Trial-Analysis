@@ -1,0 +1,108 @@
+---
+title: "Atopic Derm Trial Analysis"
+output: html_document
+date: "2024-09-24"
+author: "Adam Badrideen"
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, fig.width = 10, fig.height = 5)
+
+AD_Trials <- read_excel("C:/Users/adamb/OneDrive/Documents/AtopicDerm-Trial-Analysis/AD_Trials.xlsx")
+```
+
+# Introduction
+
+Clinical trials were downloaded (Sep 24 2024) from ClinicalTrials.gov which are in the "atopic dermatitis" therapy area. This amounted to 1498 entries (trials) in total. After data cleaning, exploratory descriptive data analysis was performed on 1392 trials.
+
+### Trial Phase by Funder Type
+
+Below is a barchart of the trial phases (NB, trials with phase "N/A" were excluded here) by funder type. Unsurprisingly industry accounts for the majority of pre-marketed trials, but non-industry institutions account for the majority of Phase4 post-marketing studies. 
+
+This is perhaps reflective of the fact that, once a therapy has been approved, academic and public healthcare institutions seek to conduct their own investigations into the use of therapies, e.g. in different indications, patient cohorts to which the therapy was intially approved.
+
+```{r plot1, echo=TRUE}
+
+
+phase_funder = AD_Trials %>% 
+  filter(Phases == "EARLY_PHASE1"| Phases == "PHASE1" | Phases == "PHASE1|PHASE2" | Phases == "PHASE2"
+         | Phases == "PHASE2|PHASE3" | Phases == "PHASE3" | Phases == "PHASE4") %>%
+  ggplot(aes(fill =  FunderType, x =  Phases)) + geom_bar() + xlab("Trial Phase") + ylab("Count of Trials")
+  
+plot(phase_funder)
+```
+
+  
+### Trial Phase by Age Cohorts
+
+Below is a barchart of the trial phases by age cohorts. While trials up to Phase3 are overwhelmingly in adults only, adult and child trials form the largest individual segment of Phase3 trials.
+
+This may indicate that by the time that manufacturers reach Phase3, they have confirmed the viability of studying their respective therapies in patients. However further analysis is needed to unpick this levelling out at Phase3
+
+```{r plot2, echo=TRUE}
+
+phase_age = AD_Trials %>% 
+  filter(Phases == "EARLY_PHASE1"| Phases == "PHASE1" | Phases == "PHASE1|PHASE2" | Phases == "PHASE2"
+         | Phases == "PHASE2|PHASE3" | Phases == "PHASE3" | Phases == "PHASE4") %>%
+  filter(AgeRegroup == "ADULT"| AgeRegroup == "CHILD" | AgeRegroup == "ADULT AND CHILD") %>%
+  ggplot(aes(fill =  AgeRegroup, x =  Phases)) + geom_bar() + xlab("Trial Phase") + ylab("Count of Trials")
+
+plot(phase_age)
+
+```
+
+### Study Start Date by Study Type
+
+This histogram shows a significant ramping up of the initiation of interventional trials from the early 2000s to the present day. 
+
+Unsurprisingly, as the number of interventional trials has increased, so has the number of observational trials; however the rate of increase of observational trials is considerably lower than that of interventional trials.
+
+```{r plot4, echo=TRUE}
+
+AD_Trials$SSD = as.Date(paste0(AD_Trials$SSD, "-01"))
+startDate_type  = AD_Trials %>% ggplot(aes (x =  SSD, fill = StudyType)) + geom_histogram(bins = 30) + scale_x_date(date_breaks =  "5 years") + 
+  xlab("Study Start Date") + ylab("Count of Trials")
+plot(startDate_type )
+
+```
+
+### Trial Length (Months) by Trial Phase
+
+Below are box-whisker plots of trial length (in months) by trial phase. NB, month figures were taken from the 10% quintile up to the 90% quintile to make the graph more readable.
+
+Notably, Phase3 trials have relatively little variation, as manufacturers follow established protocols of other manufactuers, which have been approved by regulators. Phase2/3 trials take the longest overall, as they are combining proof-of-concept with efficacy studies.
+
+
+```{r plot5, echo=TRUE}
+
+phase_length = AD_Trials %>% filter(Phases == "EARLY_PHASE1"| Phases == "PHASE1" | Phases == "PHASE1|PHASE2"
+                                   | Phases == "PHASE2"
+                                   | Phases == "PHASE2|PHASE3" | Phases == "PHASE3" | Phases == "PHASE4") %>% 
+  ggplot(aes(x = Phases, y = Months)) + geom_boxplot() + scale_y_continuous(limits = quantile(AD_Trials$Months, c(0.05, 0.95), na.rm = TRUE)) + 
+  xlab("Trial Phase") + ylab("Months")
+plot(phase_length)
+
+```
+
+### Enrollment Numbers by Trial Phase
+
+Below are box-whisker plots of enrollment numbers by trial phase. NB, enrollment figures were taken from the 5% quintile up to the 95% quintile to make the graph more readable.
+
+```{r plot3, echo=TRUE}
+
+
+phase_enrollment  = AD_Trials %>% filter(Phases == "EARLY_PHASE1"| Phases == "PHASE1" | Phases == "PHASE1|PHASE2"
+                     | Phases == "PHASE2"
+                     | Phases == "PHASE2|PHASE3" | Phases == "PHASE3" | Phases == "PHASE4") %>% 
+  ggplot(aes(x = Phases, y = Enrollment)) + geom_boxplot() +
+  scale_y_continuous(limits = quantile(AD_Trials$Enrollment, c(0.05, 0.95), na.rm = TRUE)) + xlab("Trial Phase") + ylab("Enrollment")
+plot(phase_enrollment)
+
+```
+
